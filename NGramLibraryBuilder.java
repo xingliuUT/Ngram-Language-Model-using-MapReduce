@@ -31,23 +31,24 @@ public class NGramLibraryBuilder {
 			
 			String line = value.toString();
 			
-			line = line.trim().toLowerCase();
-			line = line.replaceAll("[^a-z]", " ");
+			line = line.trim().toLowerCase(); //convert all text to lower case
+			line = line.replaceAll("[^a-z]", " ");  //replace all non-letter symbols to blank space
 			
-			String[] words = line.split("\\s+"); //split by ' ', '\t'...ect
+			String[] words = line.split("\\s+"); //split by ' '
 			
-			if(words.length<2) {
-				return;
+			if(words.length < 2) {
+				return; //if the input is less than 2 words, do nothing
 			}
 			
-			//I love big data
 			StringBuilder sb;
-			for(int i = 0; i < words.length-1; i++) {
+			for(int i = 0; i < words.length - 1; i++) {
 				sb = new StringBuilder();
 				sb.append(words[i]);
-				for(int j=1; i+j<words.length && j<noGram; j++) {
+				//j = 1, ..., Ngram -1 is the number of words after the initial word
+				for(int j = 1; i + j < words.length && j < noGram; j++) { 
 					sb.append(" ");
-					sb.append(words[i+j]);
+					sb.append(words[i + j]);
+					// output key-value pair: (phrase, 1)
 					context.write(new Text(sb.toString().trim()), new IntWritable(1));
 				}
 			}
@@ -63,6 +64,7 @@ public class NGramLibraryBuilder {
 			for(IntWritable value: values) {
 				sum += value.get();
 			}
+			// output key-value pair: (phrase, count)
 			context.write(key, new IntWritable(sum));
 		}
 	}

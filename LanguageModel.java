@@ -25,7 +25,7 @@ public class LanguageModel {
 		@Override
 		public void setup(Context context) {
 			Configuration conf = context.getConfiguration();
-			threashold = conf.getInt("threashold", 20);
+			threashold = conf.getInt("threashold", 0);
 		}
 
 		
@@ -34,10 +34,10 @@ public class LanguageModel {
 			if((value == null) || (value.toString().trim()).length() == 0) {
 				return;
 			}
-			//this is cool\t20
+			
 			String line = value.toString().trim();
 			
-			String[] wordsPlusCount = line.split("\t");
+			String[] wordsPlusCount = line.split("\t"); //MapReduce use \t to connect key & value of each intermediate result
 			if(wordsPlusCount.length < 2) {
 				return;
 			}
@@ -49,15 +49,15 @@ public class LanguageModel {
 				return;
 			}
 			
-			//this is --> cool = 20
-			StringBuilder sb = new StringBuilder();
-			for(int i = 0; i < words.length-1; i++) {
-				sb.append(words[i]).append(" ");
+		    // reconstruct starting phrase 
+			StringBuilder starting = new StringBuilder();
+			for(int i = 0; i < words.length - 1; i++) { // stop at the one before the last word
+				starting.append(words[i]).append(" ");
 			}
-			String outputKey = sb.toString().trim();
+			String outputKey = starting.toString().trim();
 			String outputValue = words[words.length - 1];
-			
-			if(!((outputKey == null) || (outputKey.length() <1))) {
+			// output key-value pair: starting_phrase, following_word = count
+			if(!((outputKey == null) || (outputKey.length() < 1))) {
 				context.write(new Text(outputKey), new Text(outputValue + "=" + count));
 			}
 		}
@@ -76,31 +76,28 @@ public class LanguageModel {
 		@Override
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 			
-			//this is, <girl = 50, boy = 60>
-			TreeMap<Integer, List<String>> tm = new TreeMap<Integer, List<String>>(Collections.reverseOrder());
+			TreeMap<Integer, List<String>> tm = new TreeMap<>(Collections.reverseOrder());
 			for(Text val: values) {
 				String curValue = val.toString().trim();
 				String word = curValue.split("=")[0].trim();
 				int count = Integer.parseInt(curValue.split("=")[1].trim());
 				if(tm.containsKey(count)) {
 					tm.get(count).add(word);
-				}
-				else {
-					List<String> list = new ArrayList<String>();
+				} else {
+					List<String> list = new ArrayList<>();
 					list.add(word);
 					tm.put(count, list);
 				}
 			}
-			//<50, <girl, bird>> <60, <boy...>>
 			Iterator<Integer> iter = tm.keySet().iterator();
-			for(int j=0; iter.hasNext() && j<n;) {
+			while (iter.hasNext()) {
 				int keyCount = iter.next();
 				List<String> words = tm.get(keyCount);
-				for(String curWord: words) {
-					context.write(new DBOutputWritable(key.toString(), curWord, keyCount),NullWritable.get());
-					j++;
+				for (String curWord: words){
+					context.write(new DBOutputWritable(key.toString(), curWord, keyCount), NullWritable.get());
 				}
 			}
+			
 		}
 	}
 }
