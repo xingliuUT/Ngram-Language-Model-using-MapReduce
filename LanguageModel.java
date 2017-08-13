@@ -25,7 +25,7 @@ public class LanguageModel {
 		@Override
 		public void setup(Context context) {
 			Configuration conf = context.getConfiguration();
-			threashold = conf.getInt("threashold", 0);
+			threashold = conf.getInt("threashold", 3);
 		}
 
 		
@@ -76,6 +76,8 @@ public class LanguageModel {
 		@Override
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 			
+			// (key, value) pair of the tree is (count, following word)
+			// ordered in descending value of count
 			TreeMap<Integer, List<String>> tm = new TreeMap<>(Collections.reverseOrder());
 			for(Text val: values) {
 				String curValue = val.toString().trim();
@@ -94,6 +96,7 @@ public class LanguageModel {
 				int keyCount = iter.next();
 				List<String> words = tm.get(keyCount);
 				for (String curWord: words){
+					// output to MySQL: starting phrase, following word, count
 					context.write(new DBOutputWritable(key.toString(), curWord, keyCount), NullWritable.get());
 				}
 			}
