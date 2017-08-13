@@ -1,11 +1,11 @@
 <?php
 // PDO connect *********
 define ('DBUSER', 'root');
-define ('DBPASS','');
+define ('DBPASS','root');
 define ('DBNAME','test');
 
 function connect() {
-    return new PDO('mysql:host=localhost;dbname=test', 'root', '', array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
+    return new PDO('mysql:host=192.168.1.4;dbname=test;port=3306', 'root', 'root', array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 }
 
 $pdo = connect();
