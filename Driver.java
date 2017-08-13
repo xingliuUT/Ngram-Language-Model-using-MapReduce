@@ -57,9 +57,9 @@ public class Driver {
 		//Use dbConfiguration to configure all the jdbcDriver, db user, db password, database
 		DBConfiguration.configureDB(conf2, 
 				"com.mysql.jdbc.Driver",
-				"jdbc:mysql://ip_address:port/test",
+				"jdbc:mysql://192.168.1.4:3306/test",
 				"root",
-				"password");
+				"root");
 		
 		Job job2 = Job.getInstance(conf2);
 		job2.setJobName("Model");
@@ -70,7 +70,7 @@ public class Driver {
 		  1. upload dependency to hdfs
 		  2. use this "addArchiveToClassPath" method to define the dependency path on hdfs
 		 */
-		job2.addArchiveToClassPath(new Path("path_to_ur_connector"));
+		job2.addArchiveToClassPath(new Path("/mysql/mysql-connector-java-5.1.39-bin.jar"));
 
 		//Why do we add map outputKey and outputValue?
 		//Because map output key and value are inconsistent with reducer output key and value
