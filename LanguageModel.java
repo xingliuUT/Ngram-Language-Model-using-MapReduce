@@ -91,13 +91,13 @@ public class LanguageModel {
 			// (key, value) pair of the tree is (count, following word)
 			// ordered in descending value of count
 			//String starting_phrase = key.toString().trim();
-			//int totalCount = 0;
+			int totalCount = 0;
 			TreeMap<Integer, List<String>> tm = new TreeMap<>(Collections.reverseOrder());
 			for(Text val: values) {
 				String curValue = val.toString().trim();
 				String word = curValue.split("=")[0].trim();
 				int count = Integer.parseInt(curValue.split("=")[1].trim());
-				
+				totalCount += count;
 			    if(tm.containsKey(count)) {
 					tm.get(count).add(word);
 				} else {
@@ -113,7 +113,7 @@ public class LanguageModel {
 				List<String> words = tm.get(keyCount);
 				for (String curWord: words){
 					// output to MySQL: starting phrase, following word, count
-					double relative_freq = (double) keyCount; /// (double) totalCount;
+					double relative_freq = (double) keyCount/ (double) totalCount;
 					context.write(new DBOutputWritable(key.toString(), curWord, relative_freq), NullWritable.get());
 				}
 			}
