@@ -25,7 +25,7 @@ public class LanguageModel {
 		@Override
 		public void setup(Context context) {
 			Configuration conf = context.getConfiguration();
-			threashold = conf.getInt("threashold", 3);
+			threashold = conf.getInt("threashold", 0);
 		}
 
 		
@@ -38,28 +38,39 @@ public class LanguageModel {
 			String line = value.toString().trim();
 			
 			String[] wordsPlusCount = line.split("\t"); //MapReduce use \t to connect key & value of each intermediate result
+			// test illegal intermediate result
 			if(wordsPlusCount.length < 2) {
 				return;
 			}
 			
 			String[] words = wordsPlusCount[0].split("\\s+");
 			int count = Integer.valueOf(wordsPlusCount[1]);
-			
+			// ignore phrases with low frequency when building languange model
 			if(count < threashold) {
 				return;
 			}
-			
-		    // reconstruct starting phrase 
-			StringBuilder starting = new StringBuilder();
-			for(int i = 0; i < words.length - 1; i++) { // stop at the one before the last word
-				starting.append(words[i]).append(" ");
-			}
-			String outputKey = starting.toString().trim();
-			String outputValue = words[words.length - 1];
-			// output key-value pair: starting_phrase, following_word = count
-			if(!((outputKey == null) || (outputKey.length() < 1))) {
-				context.write(new Text(outputKey), new Text(outputValue + "=" + count));
-			}
+			// output for 1Gram (word): (word, word = count)
+			if(words.length == 1) {
+				context.write(new Text(words[0]), new Text(words[0] + "=" + count));
+			} else {
+				// outputKey: every word except the last
+			    StringBuilder starting = new StringBuilder();
+			    for(int i = 0; i < words.length - 1; i++) { // stop at the one before the last word
+				    starting.append(words[i]).append(" ");
+			    }
+			    String outputKey = starting.toString().trim();
+				// outputValue: every word
+				StringBuilder fullWord = new StringBuilder();
+			    for(int i = 0; i < words.length; i++) {
+				    fullWord.append(words[i]).append(" ");
+			    }
+			    String outputValue = fullWord.toString().trim();
+			    // output key-value pair: starting_phrase, full_word = count
+			    if(!((outputKey == null) || (outputKey.length() < 1))) {
+				    context.write(new Text(outputKey), new Text(outputValue + "=" + count));
+					//context.write(new Text(outputValue), new Text(outputValue + "=" + count));
+			    }
+			}  
 		}
 	}
 
@@ -78,18 +89,22 @@ public class LanguageModel {
 			
 			// (key, value) pair of the tree is (count, following word)
 			// ordered in descending value of count
+			//String starting_phrase = key.toString().trim();
+			//int totalCount = 0;
 			TreeMap<Integer, List<String>> tm = new TreeMap<>(Collections.reverseOrder());
 			for(Text val: values) {
 				String curValue = val.toString().trim();
 				String word = curValue.split("=")[0].trim();
 				int count = Integer.parseInt(curValue.split("=")[1].trim());
-				if(tm.containsKey(count)) {
+				
+			    if(tm.containsKey(count)) {
 					tm.get(count).add(word);
 				} else {
 					List<String> list = new ArrayList<>();
-					list.add(word);
+				    list.add(word);
 					tm.put(count, list);
 				}
+				
 			}
 			Iterator<Integer> iter = tm.keySet().iterator();
 			while (iter.hasNext()) {
@@ -97,7 +112,8 @@ public class LanguageModel {
 				List<String> words = tm.get(keyCount);
 				for (String curWord: words){
 					// output to MySQL: starting phrase, following word, count
-					context.write(new DBOutputWritable(key.toString(), curWord, keyCount), NullWritable.get());
+					double relative_freq = (double) keyCount; /// (double) totalCount;
+					context.write(new DBOutputWritable(key.toString(), curWord, relative_freq), NullWritable.get());
 				}
 			}
 			

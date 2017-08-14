@@ -57,7 +57,7 @@ public class Driver {
 		//Use dbConfiguration to configure all the jdbcDriver, db user, db password, database
 		DBConfiguration.configureDB(conf2, 
 				"com.mysql.jdbc.Driver",
-				"jdbc:mysql://192.168.1.4:3306/test",
+				"jdbc:mysql://192.168.1.4:3306/ngram",
 				"root",
 				"root");
 		
@@ -86,8 +86,8 @@ public class Driver {
 		job2.setOutputFormatClass(DBOutputFormat.class);
 
 		//use dbOutputformat to define the table name and columns
-		DBOutputFormat.setOutput(job2, "output", 
-				new String[] {"starting_phrase", "following_word", "count"});
+		DBOutputFormat.setOutput(job2, "rFreq", 
+				new String[] {"starting_phrase", "following_word", "relative_freq"});
 
 		TextInputFormat.setInputPaths(job2, args[1]);
 		job2.waitForCompletion(true);

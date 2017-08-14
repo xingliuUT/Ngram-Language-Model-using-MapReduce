@@ -36,16 +36,17 @@ public class NGramLibraryBuilder {
 			
 			String[] words = line.split("\\s+"); //split by ' '
 			
-			if(words.length < 2) {
-				return; //if the input is less than 2 words, do nothing
+			// start from 1Gram (word)
+			if(words.length < 0) {
+				return;
 			}
 			
 			StringBuilder sb;
-			for(int i = 0; i < words.length - 1; i++) {
+			// i scans through every word
+			for(int i = 0; i < words.length; i++) {
 				sb = new StringBuilder();
-				sb.append(words[i]);
-				//j = 1, ..., Ngram -1 is the number of words after the initial word
-				for(int j = 1; i + j < words.length && j < noGram; j++) { 
+				//j = 0, ..., Ngram is the number of words after the initial word
+				for(int j = 0; i + j < words.length && j < noGram; j++) { 
 					sb.append(" ");
 					sb.append(words[i + j]);
 					// output key-value pair: (phrase, 1)
