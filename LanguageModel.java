@@ -49,9 +49,10 @@ public class LanguageModel {
 			if(count < threashold) {
 				return;
 			}
-			// output for 1Gram (word): (word, word = count)
+			// output for 1Gram (word): (WDCNT, word = count)
+			String tag = "WDCNT";
 			if(words.length == 1) {
-				context.write(new Text(words[0]), new Text(words[0] + "=" + count));
+				context.write(new Text(tag), new Text(words[0] + "=" + count));
 			} else {
 				// outputKey: every word except the last
 			    StringBuilder starting = new StringBuilder();
